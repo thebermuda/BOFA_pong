@@ -32,9 +32,38 @@ function detectLanIp() {
 }
 
 const LAN_IP = detectLanIp();
-const PUBLIC_BASE = `http://${LAN_IP}:${PORT}`;
+const LOCAL_BASE = `http://${LAN_IP}:${PORT}`;
+
+function normalizePublicUrl(raw) {
+  if (!raw) return null;
+  let u = String(raw).trim();
+  if (!u) return null;
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u.replace(/\/+$/, '');
+}
+
+const ENV_PUBLIC_URL = normalizePublicUrl(
+  process.env.PUBLIC_URL ||
+  process.env.RAILWAY_PUBLIC_DOMAIN ||
+  process.env.RAILWAY_STATIC_URL ||
+  process.env.RENDER_EXTERNAL_URL ||
+  process.env.VERCEL_URL ||
+  ''
+);
+
+function baseFromRequest(req) {
+  if (ENV_PUBLIC_URL) return ENV_PUBLIC_URL;
+  const xfProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
+  const xfHost = (req.headers['x-forwarded-host'] || req.headers['host'] || '').toString().split(',')[0].trim();
+  if (xfHost) {
+    const proto = xfProto || (xfHost.includes('localhost') || /^\d/.test(xfHost) ? 'http' : 'https');
+    return `${proto}://${xfHost}`.replace(/\/+$/, '');
+  }
+  return LOCAL_BASE;
+}
 
 const app = express();
+app.set('trust proxy', true);
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
@@ -50,7 +79,8 @@ app.get('/play', (req, res) => {
 
 app.get('/qr', async (req, res) => {
   const side = req.query.side === 'right' ? 'right' : 'left';
-  const url = `${PUBLIC_BASE}/play?side=${side}`;
+  const base = baseFromRequest(req);
+  const url = `${base}/play?side=${side}`;
   try {
     const dataUrl = await QRCode.toDataURL(url, {
       errorCorrectionLevel: 'M',
@@ -68,14 +98,16 @@ app.get('/qr', async (req, res) => {
 });
 
 app.get('/api/info', (req, res) => {
+  const base = baseFromRequest(req);
   res.json({
     lanIp: LAN_IP,
     port: PORT,
-    baseUrl: PUBLIC_BASE,
+    baseUrl: base,
+    envPublicUrl: ENV_PUBLIC_URL,
     links: {
-      display: `${PUBLIC_BASE}/`,
-      left: `${PUBLIC_BASE}/play?side=left`,
-      right: `${PUBLIC_BASE}/play?side=right`,
+      display: `${base}/`,
+      left: `${base}/play?side=left`,
+      right: `${base}/play?side=right`,
     },
   });
 });
@@ -189,9 +221,13 @@ setInterval(() => {
 }, 1000 / WORLD.tickHz);
 
 server.listen(PORT, '0.0.0.0', () => {
+  const shown = ENV_PUBLIC_URL || LOCAL_BASE;
   console.log('\n  BOFA Pong  -  server ready');
-  console.log(`  Display  : ${PUBLIC_BASE}/`);
-  console.log(`  Left QR  : ${PUBLIC_BASE}/play?side=left`);
-  console.log(`  Right QR : ${PUBLIC_BASE}/play?side=right`);
+  console.log(`  Public   : ${shown}/`);
+  console.log(`  Left QR  : ${shown}/play?side=left`);
+  console.log(`  Right QR : ${shown}/play?side=right`);
+  if (!ENV_PUBLIC_URL) {
+    console.log('  (no PUBLIC_URL set; QR URLs will be derived from request headers)');
+  }
   console.log(`  (listening on 0.0.0.0:${PORT})\n`);
 });
