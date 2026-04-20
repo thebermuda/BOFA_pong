@@ -167,6 +167,7 @@ function onGoal(state, scorer, events) {
     state.status = 'win';
     state.ball.vx = 0;
     state.ball.vy = 0;
+    state._winResetMs = 6000;
     events.push({ type: 'win', winner: scorer });
   } else {
     state.status = 'goal';
@@ -205,7 +206,23 @@ function tick(state, dt) {
     if (state._goalPauseMs <= 0) {
       startCountdown(state, 2000);
     }
-  } else if (state.status === 'paused' || state.status === 'waiting' || state.status === 'win') {
+  } else if (state.status === 'win') {
+    stepPaddles(state, dt);
+    if (typeof state._winResetMs === 'number' && state._winResetMs > 0) {
+      state._winResetMs -= dt * 1000;
+      if (state._winResetMs <= 0) {
+        state._winResetMs = 0;
+        state.winner = null;
+        state.score.left = 0;
+        state.score.right = 0;
+        if (state.slots.left && state.slots.right) {
+          startCountdown(state, 3000);
+        } else {
+          state.status = 'waiting';
+        }
+      }
+    }
+  } else if (state.status === 'paused' || state.status === 'waiting') {
     stepPaddles(state, dt);
   }
 
