@@ -279,20 +279,37 @@
     ctx.restore();
 
     if (bgLogoReady) {
-      const size = Math.min(w, h) * 0.52;
+      const CYCLE_MS = 22000;
+      const t = (now % CYCLE_MS) / CYCLE_MS;
+
+      const ease = t * t;
+
+      const minSize = Math.min(w, h) * 0.08;
+      const maxSize = Math.min(w, h) * 0.78;
+      const size = minSize + (maxSize - minSize) * ease;
+
       const cx = w / 2;
-      const cy = horizon - size * 0.05;
+      const cy = horizon - size * 0.06 + ease * (h - horizon) * 0.35;
+
+      let alpha = 1;
+      if (t < 0.08) alpha = t / 0.08;
+      else if (t > 0.88) alpha = Math.max(0, (1 - t) / 0.12);
+
+      const glowAlpha = 0.55 * alpha;
+      const coreAlpha = 0.92 * alpha;
+
+      const blurAmount = 18 + ease * 30;
 
       ctx.save();
-      ctx.globalAlpha = 0.55;
-      ctx.filter = 'blur(32px) saturate(1.2)';
+      ctx.globalAlpha = glowAlpha;
+      ctx.filter = `blur(${blurAmount}px) saturate(1.3)`;
       ctx.drawImage(bgLogo, cx - size / 2, cy - size / 2, size, size);
       ctx.restore();
 
       ctx.save();
-      ctx.globalAlpha = 0.92;
+      ctx.globalAlpha = coreAlpha;
       ctx.shadowColor = 'rgba(255,43,214,0.6)';
-      ctx.shadowBlur = 40;
+      ctx.shadowBlur = 30 + ease * 40;
       ctx.drawImage(bgLogo, cx - size / 2, cy - size / 2, size, size);
       ctx.restore();
     }
