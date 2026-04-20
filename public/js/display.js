@@ -30,6 +30,11 @@
   const TRAIL_MAX = 16;
   const particles = [];
 
+  const bgLogo = new Image();
+  let bgLogoReady = false;
+  bgLogo.onload = () => { bgLogoReady = true; };
+  bgLogo.src = '/assets/logo-bermuda.png';
+
   const dprCap = 2;
   function resizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
@@ -273,17 +278,24 @@
     }
     ctx.restore();
 
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    const sunGrad = ctx.createLinearGradient(0, horizon - 200, 0, horizon + 20);
-    sunGrad.addColorStop(0, 'rgba(255,43,214,0.35)');
-    sunGrad.addColorStop(0.5, 'rgba(255,128,80,0.18)');
-    sunGrad.addColorStop(1, 'rgba(0,240,255,0.05)');
-    ctx.fillStyle = sunGrad;
-    ctx.beginPath();
-    ctx.arc(w / 2, horizon, Math.min(w, h) * 0.28, Math.PI, 0);
-    ctx.fill();
-    ctx.restore();
+    if (bgLogoReady) {
+      const size = Math.min(w, h) * 0.52;
+      const cx = w / 2;
+      const cy = horizon - size * 0.05;
+
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.filter = 'blur(32px) saturate(1.2)';
+      ctx.drawImage(bgLogo, cx - size / 2, cy - size / 2, size, size);
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.shadowColor = 'rgba(255,43,214,0.6)';
+      ctx.shadowBlur = 40;
+      ctx.drawImage(bgLogo, cx - size / 2, cy - size / 2, size, size);
+      ctx.restore();
+    }
   }
 
   function drawPlayfieldFrame() {
