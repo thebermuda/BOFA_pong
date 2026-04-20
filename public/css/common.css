@@ -1,0 +1,81 @@
+:root {
+  --bg: #05020d;
+  --bg-2: #0a0418;
+  --cyan: #00f0ff;
+  --magenta: #ff2bd6;
+  --white: #f4f2ff;
+  --muted: #6b5f8a;
+  --cyan-glow: 0 0 12px rgba(0, 240, 255, 0.8), 0 0 28px rgba(0, 240, 255, 0.45);
+  --magenta-glow: 0 0 12px rgba(255, 43, 214, 0.85), 0 0 28px rgba(255, 43, 214, 0.45);
+  --white-glow: 0 0 10px rgba(244, 242, 255, 0.85), 0 0 24px rgba(244, 242, 255, 0.35);
+  --font-display: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  --font-pixel: 'Press Start 2P', 'Orbitron', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-display);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 800px at 20% 20%, rgba(0, 240, 255, 0.07), transparent 60%),
+    radial-gradient(1000px 700px at 80% 80%, rgba(255, 43, 214, 0.07), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  z-index: -2;
+}
+
+.glow-cyan {
+  color: var(--cyan);
+  text-shadow: var(--cyan-glow);
+}
+
+.glow-magenta {
+  color: var(--magenta);
+  text-shadow: var(--magenta-glow);
+}
+
+.glow-white {
+  color: var(--white);
+  text-shadow: var(--white-glow);
+}
+
+button,
+.btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--white);
+  border: 2px solid var(--white);
+  padding: 14px 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: var(--white-glow);
+}
+
+button:hover,
+.btn:hover {
+  transform: translateY(-1px);
+  background: rgba(244, 242, 255, 0.06);
+}

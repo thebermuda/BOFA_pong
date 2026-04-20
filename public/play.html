@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>BOFA Pong — Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, minimum-scale=1, maximum-scale=1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#05020d" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="/css/play.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="brand">BOFA · PONG</div>
+      <div class="side-tag" id="sideTag">—</div>
+    </header>
+
+    <div id="pad">
+      <div id="padPaddle"></div>
+      <div id="padHint">Desliza vertical<br/>para mover tu paleta</div>
+    </div>
+
+    <footer>
+      <div><span id="statusDot" class="status-dot waiting"></span><span id="statusText">Conectando...</span></div>
+      <div class="score-mini"><span class="l" id="scoreL">0</span><span class="sep">·</span><span class="r" id="scoreR">0</span></div>
+    </footer>
+  </div>
+
+  <div id="errorOverlay" class="hidden">
+    <div>
+      <h2 id="errorTitle">Lado ocupado</h2>
+      <p id="errorBody">Escanea el otro QR desde el display</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/play.js"></script>
+</body>
+</html>

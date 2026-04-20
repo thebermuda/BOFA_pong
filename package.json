@@ -1,0 +1,20 @@
+{
+  "name": "bofa-pong",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pong web neon multijugador - display + 2 celulares via QR",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

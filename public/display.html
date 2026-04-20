@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>BOFA Pong — Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="/css/display.css" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+
+  <div id="overlay">
+    <section class="waiting" id="waitingScreen">
+      <div>
+        <h1 class="title">
+          <span class="p1">P</span><span class="o">O</span><span class="p2">N</span><span class="o">G</span>
+        </h1>
+        <p class="subtitle">Escanea los QR con cada celular para controlar una paleta</p>
+      </div>
+
+      <div class="qr-row">
+        <div class="qr-card left" id="qrCardLeft">
+          <h2 class="qr-label">Izquierda</h2>
+          <div class="qr-img-wrap" id="qrWrapLeft">
+            <img id="qrImgLeft" alt="QR lado izquierdo" />
+            <div class="connected-badge">LISTO</div>
+          </div>
+          <p class="qr-status" id="qrStatusLeft">Esperando jugador</p>
+        </div>
+        <div class="qr-card right" id="qrCardRight">
+          <h2 class="qr-label">Derecha</h2>
+          <div class="qr-img-wrap" id="qrWrapRight">
+            <img id="qrImgRight" alt="QR lado derecho" />
+            <div class="connected-badge">LISTO</div>
+          </div>
+          <p class="qr-status" id="qrStatusRight">Esperando jugador</p>
+        </div>
+      </div>
+
+      <p class="hint" id="hintText">Primero a 7 gana</p>
+    </section>
+
+    <div id="countdown" aria-hidden="true"></div>
+
+    <section class="win-screen" id="winScreen" style="display:none">
+      <p class="win-sub">Ganador</p>
+      <h1 class="win-title" id="winTitle">&nbsp;</h1>
+      <p class="win-sub">Nueva partida en breve...</p>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/display.js"></script>
+</body>
+</html>
