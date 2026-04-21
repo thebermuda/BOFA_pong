@@ -23,12 +23,15 @@
 
   const gameViewport = document.getElementById('gameViewport');
   const calibTrigger = document.getElementById('calibTrigger');
-  const calibBackdrop = document.getElementById('calibBackdrop');
   const calibPanel = document.getElementById('calibPanel');
   const projWidth = document.getElementById('projWidth');
   const projHeight = document.getElementById('projHeight');
+  const projPanX = document.getElementById('projPanX');
+  const projPanY = document.getElementById('projPanY');
   const projWidthVal = document.getElementById('projWidthVal');
   const projHeightVal = document.getElementById('projHeightVal');
+  const projPanXVal = document.getElementById('projPanXVal');
+  const projPanYVal = document.getElementById('projPanYVal');
   const calibReset = document.getElementById('calibReset');
   const calibClose = document.getElementById('calibClose');
 
@@ -67,34 +70,49 @@
   function loadProjection() {
     try {
       const raw = localStorage.getItem(PROJ_STORAGE_KEY);
-      if (!raw) return { wPct: 100, hPct: 100 };
+      if (!raw) return { wPct: 100, hPct: 100, panX: 0, panY: 0 };
       const j = JSON.parse(raw);
       return {
         wPct: clamp(Math.round((j.w != null ? j.w : 1) * 100), 40, 100),
         hPct: clamp(Math.round((j.h != null ? j.h : 1) * 100), 40, 100),
+        panX: clamp(Math.round(j.ox != null ? j.ox : 0), -30, 30),
+        panY: clamp(Math.round(j.oy != null ? j.oy : 0), -30, 30),
       };
     } catch {
-      return { wPct: 100, hPct: 100 };
+      return { wPct: 100, hPct: 100, panX: 0, panY: 0 };
     }
   }
 
-  function saveProjection(wPct, hPct) {
+  function formatPan(n) {
+    return (n > 0 ? '+' : '') + String(n);
+  }
+
+  function saveProjection(wPct, hPct, panX, panY) {
     localStorage.setItem(PROJ_STORAGE_KEY, JSON.stringify({
       w: wPct / 100,
       h: hPct / 100,
+      ox: panX,
+      oy: panY,
     }));
   }
 
   function commitProjectionFromSliders() {
     const wPct = clamp(Number(projWidth.value), 40, 100);
     const hPct = clamp(Number(projHeight.value), 40, 100);
+    const panX = clamp(Number(projPanX.value), -30, 30);
+    const panY = clamp(Number(projPanY.value), -30, 30);
     projWidth.value = wPct;
     projHeight.value = hPct;
+    projPanX.value = panX;
+    projPanY.value = panY;
     gameViewport.style.width = `calc(100vw * ${wPct / 100})`;
     gameViewport.style.height = `calc(100vh * ${hPct / 100})`;
+    gameViewport.style.transform = `translate(${panX}vw, ${panY}vh)`;
     projWidthVal.textContent = String(wPct);
     projHeightVal.textContent = String(hPct);
-    saveProjection(wPct, hPct);
+    projPanXVal.textContent = formatPan(panX);
+    projPanYVal.textContent = formatPan(panY);
+    saveProjection(wPct, hPct, panX, panY);
     resizeCanvas();
   }
 
@@ -104,9 +122,7 @@
 
   function setCalibOpen(open) {
     calibPanel.classList.toggle('hidden', !open);
-    calibBackdrop.classList.toggle('hidden', !open);
     calibPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
-    calibBackdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
   }
 
   function toggleCalib() {
@@ -116,6 +132,8 @@
   const initProj = loadProjection();
   projWidth.value = initProj.wPct;
   projHeight.value = initProj.hPct;
+  projPanX.value = initProj.panX;
+  projPanY.value = initProj.panY;
   commitProjectionFromSliders();
 
   window.addEventListener('resize', resizeCanvas);
@@ -127,15 +145,18 @@
     e.preventDefault();
     toggleCalib();
   });
-  calibBackdrop.addEventListener('click', () => setCalibOpen(false));
   calibClose.addEventListener('click', () => setCalibOpen(false));
   calibReset.addEventListener('click', () => {
     projWidth.value = '100';
     projHeight.value = '100';
+    projPanX.value = '0';
+    projPanY.value = '0';
     commitProjectionFromSliders();
   });
   projWidth.addEventListener('input', () => commitProjectionFromSliders());
   projHeight.addEventListener('input', () => commitProjectionFromSliders());
+  projPanX.addEventListener('input', () => commitProjectionFromSliders());
+  projPanY.addEventListener('input', () => commitProjectionFromSliders());
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'p' || e.key === 'P') {

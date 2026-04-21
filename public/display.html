@@ -64,10 +64,9 @@
     </div>
   </div>
 
-  <div id="calibBackdrop" class="calib-backdrop hidden" aria-hidden="true"></div>
-  <aside id="calibPanel" class="calib-panel hidden" role="dialog" aria-labelledby="calibTitle" aria-modal="true">
+  <aside id="calibPanel" class="calib-panel hidden" role="dialog" aria-labelledby="calibTitle" aria-modal="false">
     <h2 id="calibTitle" class="calib-title">Projection fit</h2>
-    <p class="calib-desc">Scale the game area to match your surface. Settings are saved on this device.</p>
+    <p class="calib-desc">Adjust while you see the game. Nothing is dimmed behind this panel.</p>
 
     <div class="calib-field">
       <label for="projWidth">Width <span id="projWidthVal" class="calib-val">100</span>%</label>
@@ -77,12 +76,20 @@
       <label for="projHeight">Height <span id="projHeightVal" class="calib-val">100</span>%</label>
       <input type="range" id="projHeight" min="40" max="100" step="1" value="100" />
     </div>
+    <div class="calib-field">
+      <label for="projPanX">Pan left / right <span id="projPanXVal" class="calib-val">0</span> vw</label>
+      <input type="range" id="projPanX" min="-30" max="30" step="1" value="0" />
+    </div>
+    <div class="calib-field">
+      <label for="projPanY">Pan up / down <span id="projPanYVal" class="calib-val">0</span> vh</label>
+      <input type="range" id="projPanY" min="-30" max="30" step="1" value="0" />
+    </div>
 
     <div class="calib-actions">
       <button type="button" id="calibReset" class="calib-btn secondary">Reset</button>
       <button type="button" id="calibClose" class="calib-btn">Close</button>
     </div>
-    <p class="calib-hint">Tip: press <kbd>P</kbd> to open · <kbd>Esc</kbd> to close</p>
+    <p class="calib-hint"><kbd>P</kbd> toggle · <kbd>Esc</kbd> close</p>
   </aside>
 
   <script src="/socket.io/socket.io.js"></script>
