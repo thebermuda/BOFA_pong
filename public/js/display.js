@@ -21,6 +21,19 @@
   const qrStatusLeft = document.getElementById('qrStatusLeft');
   const qrStatusRight = document.getElementById('qrStatusRight');
 
+  const gameViewport = document.getElementById('gameViewport');
+  const calibTrigger = document.getElementById('calibTrigger');
+  const calibBackdrop = document.getElementById('calibBackdrop');
+  const calibPanel = document.getElementById('calibPanel');
+  const projWidth = document.getElementById('projWidth');
+  const projHeight = document.getElementById('projHeight');
+  const projWidthVal = document.getElementById('projWidthVal');
+  const projHeightVal = document.getElementById('projHeightVal');
+  const calibReset = document.getElementById('calibReset');
+  const calibClose = document.getElementById('calibClose');
+
+  const PROJ_STORAGE_KEY = 'bofaPong.projection';
+
   let world = { width: 1600, height: 900 };
   let snapshot = null;
   let lastStatus = 'waiting';
@@ -38,16 +51,102 @@
   const dprCap = 2;
   function resizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = Math.max(1, gameViewport.clientWidth);
+    const h = Math.max(1, gameViewport.clientHeight);
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
+
+  function clamp(n, lo, hi) {
+    return Math.max(lo, Math.min(hi, n));
+  }
+
+  function loadProjection() {
+    try {
+      const raw = localStorage.getItem(PROJ_STORAGE_KEY);
+      if (!raw) return { wPct: 100, hPct: 100 };
+      const j = JSON.parse(raw);
+      return {
+        wPct: clamp(Math.round((j.w != null ? j.w : 1) * 100), 40, 100),
+        hPct: clamp(Math.round((j.h != null ? j.h : 1) * 100), 40, 100),
+      };
+    } catch {
+      return { wPct: 100, hPct: 100 };
+    }
+  }
+
+  function saveProjection(wPct, hPct) {
+    localStorage.setItem(PROJ_STORAGE_KEY, JSON.stringify({
+      w: wPct / 100,
+      h: hPct / 100,
+    }));
+  }
+
+  function commitProjectionFromSliders() {
+    const wPct = clamp(Number(projWidth.value), 40, 100);
+    const hPct = clamp(Number(projHeight.value), 40, 100);
+    projWidth.value = wPct;
+    projHeight.value = hPct;
+    gameViewport.style.width = `calc(100vw * ${wPct / 100})`;
+    gameViewport.style.height = `calc(100vh * ${hPct / 100})`;
+    projWidthVal.textContent = String(wPct);
+    projHeightVal.textContent = String(hPct);
+    saveProjection(wPct, hPct);
+    resizeCanvas();
+  }
+
+  function isCalibOpen() {
+    return !calibPanel.classList.contains('hidden');
+  }
+
+  function setCalibOpen(open) {
+    calibPanel.classList.toggle('hidden', !open);
+    calibBackdrop.classList.toggle('hidden', !open);
+    calibPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    calibBackdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  function toggleCalib() {
+    setCalibOpen(!isCalibOpen());
+  }
+
+  const initProj = loadProjection();
+  projWidth.value = initProj.wPct;
+  projHeight.value = initProj.hPct;
+  commitProjectionFromSliders();
+
   window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => resizeCanvas()).observe(gameViewport);
+  }
+
+  calibTrigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleCalib();
+  });
+  calibBackdrop.addEventListener('click', () => setCalibOpen(false));
+  calibClose.addEventListener('click', () => setCalibOpen(false));
+  calibReset.addEventListener('click', () => {
+    projWidth.value = '100';
+    projHeight.value = '100';
+    commitProjectionFromSliders();
+  });
+  projWidth.addEventListener('input', () => commitProjectionFromSliders());
+  projHeight.addEventListener('input', () => commitProjectionFromSliders());
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'p' || e.key === 'P') {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      e.preventDefault();
+      toggleCalib();
+    } else if (e.key === 'Escape' && isCalibOpen()) {
+      e.preventDefault();
+      setCalibOpen(false);
+    }
+  });
 
   async function loadQR(side, img) {
     try {
@@ -114,8 +213,8 @@
     qrWrapLeft.classList.toggle('connected', leftOn);
     qrCardRight.classList.toggle('connected', rightOn);
     qrWrapRight.classList.toggle('connected', rightOn);
-    qrStatusLeft.textContent = leftOn ? 'Conectado' : 'Esperando jugador';
-    qrStatusRight.textContent = rightOn ? 'Conectado' : 'Esperando jugador';
+    qrStatusLeft.textContent = leftOn ? 'Connected' : 'Waiting for player';
+    qrStatusRight.textContent = rightOn ? 'Connected' : 'Waiting for player';
 
     const showWaiting = room.status === 'waiting' || room.status === 'paused';
     if (showWaiting) {
@@ -123,8 +222,8 @@
       waitingScreen.style.display = 'grid';
       winScreen.style.display = 'none';
       hintText.textContent = room.status === 'paused'
-        ? 'Reconectando jugador...'
-        : 'Primero a 7 gana';
+        ? 'Reconnecting player...'
+        : 'First to 7 wins';
     } else if (room.status === 'win') {
       overlay.classList.remove('hidden');
       waitingScreen.style.display = 'none';
@@ -136,8 +235,8 @@
   function showWinScreen(winner) {
     winScreen.style.display = 'grid';
     winTitle.innerHTML = winner === 'left'
-      ? '<span class="glow-cyan">IZQUIERDA</span>'
-      : '<span class="glow-magenta">DERECHA</span>';
+      ? '<span class="glow-cyan">LEFT</span>'
+      : '<span class="glow-magenta">RIGHT</span>';
   }
 
   let countdownTimer = null;

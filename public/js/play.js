@@ -19,7 +19,7 @@
   const errorBody = document.getElementById('errorBody');
 
   app.classList.add('side-' + side);
-  sideTag.textContent = side === 'left' ? 'IZQUIERDA' : 'DERECHA';
+  sideTag.textContent = side === 'left' ? 'LEFT' : 'RIGHT';
 
   const socket = io({ transports: ['websocket', 'polling'] });
 
@@ -109,13 +109,13 @@
   window.addEventListener('resize', () => updatePaddleVisual(lastY));
 
   socket.on('connect', () => {
-    setStatus('waiting', 'Conectado · reclamando lado');
+    setStatus('waiting', 'Connected · claiming side');
     socket.emit('player:claim', { side });
   });
 
   socket.on('disconnect', () => {
     assigned = false;
-    setStatus('error', 'Desconectado, reintentando...');
+    setStatus('error', 'Disconnected, retrying...');
   });
 
   socket.on('player:assigned', (msg) => {
@@ -123,9 +123,9 @@
     rejected = false;
     errorOverlay.classList.add('hidden');
     if (msg?.bothConnected) {
-      setStatus('connected', 'En partida');
+      setStatus('connected', 'In match');
     } else {
-      setStatus('waiting', 'Esperando oponente...');
+      setStatus('waiting', 'Waiting for opponent...');
     }
   });
 
@@ -134,13 +134,13 @@
     rejected = true;
     errorOverlay.classList.remove('hidden');
     if (msg?.reason === 'occupied') {
-      errorTitle.textContent = 'Lado ocupado';
-      errorBody.textContent = 'Este lado ya tiene un jugador. Escanea el otro QR.';
+      errorTitle.textContent = 'Side taken';
+      errorBody.textContent = 'This side already has a player. Scan the other QR code.';
     } else {
       errorTitle.textContent = 'Error';
-      errorBody.textContent = 'No se pudo asignar el lado.';
+      errorBody.textContent = 'Could not assign this side.';
     }
-    setStatus('error', 'Rechazado');
+    setStatus('error', 'Rejected');
   });
 
   socket.on('room:state', (room) => {
@@ -151,17 +151,17 @@
     if (assigned && !rejected) {
       const both = room.slots?.left && room.slots?.right;
       if (room.status === 'win') {
-        setStatus('waiting', 'Fin de partida');
+        setStatus('waiting', 'Match over');
       } else if (room.status === 'paused') {
-        setStatus('waiting', 'Pausa · esperando oponente');
+        setStatus('waiting', 'Paused · waiting for opponent');
       } else if (room.status === 'countdown') {
-        setStatus('connected', 'Listos...');
+        setStatus('connected', 'Get ready...');
       } else if (room.status === 'playing' || room.status === 'goal') {
-        setStatus('connected', 'En partida');
+        setStatus('connected', 'In match');
       } else if (both) {
-        setStatus('connected', 'En partida');
+        setStatus('connected', 'In match');
       } else {
-        setStatus('waiting', 'Esperando oponente...');
+        setStatus('waiting', 'Waiting for opponent...');
       }
     }
   });
