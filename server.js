@@ -15,6 +15,7 @@ const {
   tick,
   getSnapshot,
   WORLD,
+  setCourtWidth,
 } = require('./src/game');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -149,6 +150,12 @@ io.on('connection', (socket) => {
       snapshot: getSnapshot(state),
     });
     broadcastRoom();
+  });
+
+  socket.on('display:setCourtWidth', ({ width } = {}) => {
+    if (role !== 'display') return;
+    if (typeof width !== 'number' || !Number.isFinite(width)) return;
+    setCourtWidth(state, width);
   });
 
   socket.on('player:claim', ({ side } = {}) => {

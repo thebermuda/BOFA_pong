@@ -66,14 +66,19 @@
 
   <aside id="calibPanel" class="calib-panel hidden" role="dialog" aria-labelledby="calibTitle" aria-modal="false">
     <h2 id="calibTitle" class="calib-title">Projection fit</h2>
-    <p class="calib-desc">Adjust while you see the game. Nothing is dimmed behind this panel.</p>
+    <p class="calib-desc">Projection: viewport size and pan (below). Court width: logical playfield (server) — wider = paddles farther apart, no stretch distortion on screen.</p>
 
     <div class="calib-field">
-      <label for="projWidth">Width <span id="projWidthVal" class="calib-val">100</span>%</label>
+      <label for="courtWidth">Court width <span id="courtWidthVal" class="calib-val">1600</span> px</label>
+      <input type="range" id="courtWidth" min="1200" max="3600" step="50" value="1600" />
+    </div>
+
+    <div class="calib-field">
+      <label for="projWidth">Viewport width <span id="projWidthVal" class="calib-val">100</span>%</label>
       <input type="range" id="projWidth" min="40" max="100" step="1" value="100" />
     </div>
     <div class="calib-field">
-      <label for="projHeight">Height <span id="projHeightVal" class="calib-val">100</span>%</label>
+      <label for="projHeight">Viewport height <span id="projHeightVal" class="calib-val">100</span>%</label>
       <input type="range" id="projHeight" min="40" max="100" step="1" value="100" />
     </div>
     <div class="calib-field">
@@ -89,6 +94,9 @@
       <button type="button" id="calibReset" class="calib-btn secondary">Reset</button>
       <button type="button" id="calibClose" class="calib-btn">Close</button>
     </div>
+    <button type="button" id="calibDebugCourt" class="calib-btn calib-debug" aria-pressed="false">
+      Debug: preview court
+    </button>
     <p class="calib-hint"><kbd>P</kbd> toggle · <kbd>Esc</kbd> close</p>
   </aside>
 

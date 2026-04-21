@@ -1,7 +1,25 @@
 'use strict';
 
+const COURT_WIDTH_MIN = 1200;
+const COURT_WIDTH_MAX = 3600;
+const COURT_WIDTH_STEP = 50;
+const COURT_WIDTH_DEFAULT = 1600;
+
+function clampCourtWidth(w) {
+  const r = Math.round(w / COURT_WIDTH_STEP) * COURT_WIDTH_STEP;
+  return Math.max(COURT_WIDTH_MIN, Math.min(COURT_WIDTH_MAX, r));
+}
+
+let courtWidth = COURT_WIDTH_DEFAULT;
+const envW = Number(process.env.COURT_WIDTH);
+if (Number.isFinite(envW)) {
+  courtWidth = clampCourtWidth(envW);
+}
+
 const WORLD = {
-  width: 1600,
+  get width() {
+    return courtWidth;
+  },
   height: 900,
   paddle: {
     width: 22,
@@ -18,6 +36,30 @@ const WORLD = {
   winScore: 7,
   tickHz: 60,
 };
+
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function normalizeStateAfterCourtResize(state) {
+  const r = WORLD.ball.size / 2;
+  const halfH = WORLD.paddle.height / 2;
+  state.ball.x = clamp(state.ball.x, r, WORLD.width - r);
+  state.ball.y = clamp(state.ball.y, r, WORLD.height - r);
+  for (const side of ['left', 'right']) {
+    const p = state.paddles[side];
+    p.y = clamp(p.y, halfH, WORLD.height - halfH);
+    p.targetY = clamp(p.targetY, halfH, WORLD.height - halfH);
+  }
+}
+
+function setCourtWidth(state, w) {
+  const nw = clampCourtWidth(w);
+  if (nw === courtWidth) return nw;
+  courtWidth = nw;
+  normalizeStateAfterCourtResize(state);
+  return nw;
+}
 
 function createInitialState() {
   return {
@@ -247,6 +289,12 @@ function getSnapshot(state) {
 
 module.exports = {
   WORLD,
+  COURT_WIDTH_MIN,
+  COURT_WIDTH_MAX,
+  COURT_WIDTH_STEP,
+  COURT_WIDTH_DEFAULT,
+  clampCourtWidth,
+  setCourtWidth,
   createInitialState,
   setSlot,
   setPaddleTarget,

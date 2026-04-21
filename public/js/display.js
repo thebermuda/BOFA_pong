@@ -34,12 +34,22 @@
   const projPanYVal = document.getElementById('projPanYVal');
   const calibReset = document.getElementById('calibReset');
   const calibClose = document.getElementById('calibClose');
+  const calibDebugCourt = document.getElementById('calibDebugCourt');
+  const courtWidthInput = document.getElementById('courtWidth');
+  const courtWidthVal = document.getElementById('courtWidthVal');
 
   const PROJ_STORAGE_KEY = 'bofaPong.projection';
+  const COURT_STORAGE_KEY = 'bofaPong.courtWidth';
+  const COURT_MIN = 1200;
+  const COURT_MAX = 3600;
+  let courtSliderDragging = false;
+
+  let debugCourtPreview = false;
 
   let world = { width: 1600, height: 900 };
   let snapshot = null;
   let lastStatus = 'waiting';
+  let lastRoomState = { status: 'waiting', slots: { left: false, right: false } };
   let lastCountdownValue = -1;
 
   const trail = [];
@@ -54,8 +64,9 @@
   const dprCap = 2;
   function resizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-    const w = Math.max(1, gameViewport.clientWidth);
-    const h = Math.max(1, gameViewport.clientHeight);
+    const r = gameViewport.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width));
+    const h = Math.max(1, Math.round(r.height));
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.width = w + 'px';
@@ -158,6 +169,61 @@
   projPanX.addEventListener('input', () => commitProjectionFromSliders());
   projPanY.addEventListener('input', () => commitProjectionFromSliders());
 
+  function loadCourtWidth() {
+    try {
+      const raw = localStorage.getItem(COURT_STORAGE_KEY);
+      if (raw == null) return null;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return null;
+      return clamp(Math.round(n / 50) * 50, COURT_MIN, COURT_MAX);
+    } catch {
+      return null;
+    }
+  }
+
+  function setCourtSliderUI(w) {
+    const nw = clamp(Math.round(w / 50) * 50, COURT_MIN, COURT_MAX);
+    courtWidthInput.value = String(nw);
+    courtWidthVal.textContent = String(nw);
+  }
+
+  function commitCourtWidth() {
+    const nw = clamp(Math.round(Number(courtWidthInput.value) / 50) * 50, COURT_MIN, COURT_MAX);
+    courtWidthInput.value = String(nw);
+    courtWidthVal.textContent = String(nw);
+    localStorage.setItem(COURT_STORAGE_KEY, String(nw));
+    socket.emit('display:setCourtWidth', { width: nw });
+  }
+
+  courtWidthInput.addEventListener('pointerdown', () => { courtSliderDragging = true; });
+  courtWidthInput.addEventListener('pointerup', () => { courtSliderDragging = false; });
+  courtWidthInput.addEventListener('pointercancel', () => { courtSliderDragging = false; });
+  courtWidthInput.addEventListener('input', () => commitCourtWidth());
+
+  function fakeCourtSnapshot() {
+    const w = world.width;
+    const h = world.height;
+    return {
+      score: { left: 0, right: 0 },
+      ball: { x: w / 2, y: h / 2, vx: 0, vy: 0 },
+      paddles: { left: { y: h / 2 }, right: { y: h / 2 } },
+    };
+  }
+
+  function syncDebugCourtButton() {
+    calibDebugCourt.setAttribute('aria-pressed', debugCourtPreview ? 'true' : 'false');
+    calibDebugCourt.textContent = debugCourtPreview
+      ? 'Debug: preview on (tap to turn off)'
+      : 'Debug: preview court';
+  }
+
+  calibDebugCourt.addEventListener('click', () => {
+    debugCourtPreview = !debugCourtPreview;
+    syncDebugCourtButton();
+    refreshOverlayAfterDebugToggle();
+  });
+  syncDebugCourtButton();
+
   window.addEventListener('keydown', (e) => {
     if (e.key === 'p' || e.key === 'P') {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -186,15 +252,32 @@
   });
 
   socket.on('display:hello', (msg) => {
-    if (msg?.world) world = msg.world;
     if (msg?.snapshot) snapshot = msg.snapshot;
+    if (msg?.world) {
+      world = msg.world;
+      const saved = loadCourtWidth();
+      if (saved != null && saved !== msg.world.width) {
+        setCourtSliderUI(saved);
+        socket.emit('display:setCourtWidth', { width: saved });
+      } else {
+        setCourtSliderUI(msg.world.width);
+      }
+    }
   });
 
   socket.on('game:tick', (snap) => {
     snapshot = snap;
+    if (snap.world) {
+      world = { width: snap.world.width, height: snap.world.height };
+      if (!courtSliderDragging) {
+        courtWidthInput.value = String(world.width);
+        courtWidthVal.textContent = String(world.width);
+      }
+    }
   });
 
   socket.on('room:state', (room) => {
+    lastRoomState = room;
     updateWaitingUI(room);
     if (room.status === 'win' && room.winner) {
       showWinScreen(room.winner);
@@ -237,6 +320,13 @@
     qrStatusLeft.textContent = leftOn ? 'Connected' : 'Waiting for player';
     qrStatusRight.textContent = rightOn ? 'Connected' : 'Waiting for player';
 
+    if (debugCourtPreview && (room.status === 'waiting' || room.status === 'paused')) {
+      overlay.classList.add('hidden');
+      waitingScreen.style.display = 'none';
+      winScreen.style.display = 'none';
+      return;
+    }
+
     const showWaiting = room.status === 'waiting' || room.status === 'paused';
     if (showWaiting) {
       overlay.classList.remove('hidden');
@@ -250,6 +340,13 @@
       waitingScreen.style.display = 'none';
     } else {
       overlay.classList.add('hidden');
+    }
+  }
+
+  function refreshOverlayAfterDebugToggle() {
+    updateWaitingUI(lastRoomState);
+    if (lastRoomState.status === 'win' && lastRoomState.winner) {
+      showWinScreen(lastRoomState.winner);
     }
   }
 
@@ -339,24 +436,43 @@
 
     drawBackground(viewW, viewH, now);
 
+    const st = snapshot?.status;
+    const inRealMatch = st === 'countdown' || st === 'playing' || st === 'goal';
+    const useDebugFake = debugCourtPreview && !inRealMatch && st !== 'win';
+    const showMatchLayer = inRealMatch || useDebugFake;
+    const snapForDraw = useDebugFake ? fakeCourtSnapshot() : snapshot;
+
     ctx.save();
     ctx.translate(ox, oy);
     ctx.scale(scale, scale);
 
-    drawPlayfieldFrame();
-    drawCenterLine();
-    drawScore(snapshot?.score);
+    if (showMatchLayer) {
+      drawPlayfieldFrame();
+      drawCenterLine();
+      drawScore(snapForDraw?.score);
 
-    if (snapshot) {
-      updateTrail(snapshot.ball);
-      drawTrail();
-      drawPaddle('left', snapshot.paddles.left.y);
-      drawPaddle('right', snapshot.paddles.right.y);
-      drawBall(snapshot.ball);
+      if (snapForDraw) {
+        if (!useDebugFake) {
+          updateTrail(snapForDraw.ball);
+          drawTrail();
+        } else {
+          trail.length = 0;
+        }
+        drawPaddle('left', snapForDraw.paddles.left.y);
+        drawPaddle('right', snapForDraw.paddles.right.y);
+        drawBall(snapForDraw.ball);
+      }
+
+      if (useDebugFake) {
+        particles.length = 0;
+      } else {
+        updateParticles(dt);
+        drawParticles();
+      }
+    } else {
+      trail.length = 0;
+      particles.length = 0;
     }
-
-    updateParticles(dt);
-    drawParticles();
 
     ctx.restore();
 
@@ -464,15 +580,17 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
+    const scoreOff = Math.min(300, Math.max(160, world.width * 0.14));
+
     ctx.shadowColor = '#00f0ff';
     ctx.shadowBlur = 30;
     ctx.fillStyle = '#00f0ff';
-    ctx.fillText(String(score.left), world.width / 2 - 220, 150);
+    ctx.fillText(String(score.left), world.width / 2 - scoreOff, 150);
 
     ctx.shadowColor = '#ff2bd6';
     ctx.shadowBlur = 30;
     ctx.fillStyle = '#ff2bd6';
-    ctx.fillText(String(score.right), world.width / 2 + 220, 150);
+    ctx.fillText(String(score.right), world.width / 2 + scoreOff, 150);
     ctx.restore();
   }
 
