@@ -109,21 +109,29 @@ body {
 
 .waiting {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 48px;
+  grid-template-rows: auto auto auto;
+  gap: clamp(4px, min(3cqw, 4cqh), 40px);
   width: min(1500px, 95%);
   max-width: 100%;
+  max-height: 100%;
   min-width: 0;
+  min-height: 0;
+  align-content: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(2px, 1.5cqh, 12px) 0;
+  box-sizing: border-box;
   text-align: center;
+  pointer-events: auto;
 }
 
 .title {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(40px, 9cqw, 140px);
-  letter-spacing: 0.18em;
+  font-size: clamp(18px, min(9cqw, 14cqh), 140px);
+  letter-spacing: 0.1em;
   margin: 0;
-  line-height: 1;
+  line-height: 0.95;
 }
 
 .title .p1 { color: var(--cyan); text-shadow: var(--cyan-glow); }
@@ -134,17 +142,19 @@ body {
   font-family: var(--font-display);
   font-weight: 500;
   color: var(--muted);
-  letter-spacing: 0.3em;
+  letter-spacing: clamp(0.08em, 0.3em, 0.3em);
   text-transform: uppercase;
   margin: 0;
-  font-size: clamp(12px, 2.8cqw, 20px);
+  font-size: clamp(8px, min(2.8cqw, 4.5cqh), 20px);
+  line-height: 1.2;
+  max-width: 100%;
 }
 
 .qr-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(16px, 6cqw, 120px);
-  align-items: center;
+  gap: clamp(6px, min(5cqw, 6cqh), 100px);
+  align-items: start;
   justify-items: center;
   min-width: 0;
   width: 100%;
@@ -153,13 +163,15 @@ body {
 .qr-card {
   display: grid;
   grid-template-rows: auto auto auto;
-  gap: clamp(10px, 2cqw, 20px);
-  padding: clamp(12px, 4cqw, 32px);
-  border-radius: 24px;
+  gap: clamp(4px, min(1.8cqw, 2.5cqh), 16px);
+  padding: clamp(4px, min(3cqw, 3.5cqh), 24px);
+  border-radius: clamp(10px, 2cqh, 24px);
   background: rgba(255, 255, 255, 0.02);
   border: 2px solid currentColor;
   backdrop-filter: blur(6px);
-  min-width: min(100%, clamp(120px, 28cqw, 460px));
+  width: 100%;
+  max-width: min(100%, clamp(80px, 42cqw, 520px));
+  min-width: 0;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -174,21 +186,23 @@ body {
 .qr-label {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(14px, 3.5cqw, 48px);
-  letter-spacing: 0.3em;
+  font-size: clamp(10px, min(3.2cqw, 5cqh), 44px);
+  letter-spacing: clamp(0.1em, 0.25em, 0.3em);
   text-transform: uppercase;
   margin: 0;
   text-shadow: 0 0 10px currentColor;
+  line-height: 1.1;
 }
 
 .qr-img-wrap {
   position: relative;
-  width: min(100%, clamp(100px, 22cqw, 360px));
+  width: min(100%, clamp(48px, min(28cqw, 42cqh), 280px));
+  max-width: min(100%, 55cqh);
   aspect-ratio: 1;
   margin: 0 auto;
   display: grid;
   place-items: center;
-  border-radius: 16px;
+  border-radius: clamp(8px, 1.5cqh, 16px);
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
@@ -207,11 +221,12 @@ body {
 
 .qr-status {
   font-family: var(--font-display);
-  font-size: clamp(10px, 2.2cqw, 18px);
-  letter-spacing: 0.35em;
+  font-size: clamp(7px, min(2cqw, 3.2cqh), 16px);
+  letter-spacing: clamp(0.06em, 0.28em, 0.35em);
   text-transform: uppercase;
   color: var(--muted);
   margin: 0;
+  line-height: 1.15;
 }
 
 .qr-card.connected .qr-status {
@@ -226,8 +241,8 @@ body {
   place-items: center;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(12px, 3.5cqw, 42px);
-  letter-spacing: 0.2em;
+  font-size: clamp(9px, min(3cqw, 5cqh), 36px);
+  letter-spacing: 0.15em;
   color: currentColor;
   text-shadow: 0 0 14px currentColor;
   opacity: 0;
@@ -240,11 +255,12 @@ body {
 
 .hint {
   font-family: var(--font-display);
-  font-size: clamp(10px, 2cqw, 18px);
+  font-size: clamp(7px, min(1.8cqw, 3.5cqh), 16px);
   color: var(--muted);
-  letter-spacing: 0.3em;
+  letter-spacing: clamp(0.08em, 0.25em, 0.3em);
   text-transform: uppercase;
   margin: 0;
+  line-height: 1.2;
 }
 
 #countdown {
